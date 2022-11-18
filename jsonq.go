@@ -97,6 +97,12 @@ func (j *JSONQ) FromString(str string) *JSONQ {
 	return j.decode() // handle error
 }
 
+// FromByteArray reads the content from valid json/xml/csv/yml string
+func (j *JSONQ) FromByteArray(bytes []byte) *JSONQ {
+	j.raw = bytes
+	return j.decode() // handle error
+}
+
 // Reader reads the json content from io reader
 func (j *JSONQ) Reader(r io.Reader) *JSONQ {
 	buf := new(bytes.Buffer)
