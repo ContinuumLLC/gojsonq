@@ -261,6 +261,13 @@ func TestJSONQ_From_Set(t *testing.T) {
 	}
 }
 
+func TestJSONQ_DefaultValues(t *testing.T) {
+	jq := New().DefaultValues("id", "name")
+	if len(jq.defaultValues) != 1 {
+		t.Error("failed to set DefaultValues")
+	}
+}
+
 func TestJSONQ_Select(t *testing.T) {
 	jq := New().Select("id", "name")
 	if len(jq.attributes) != 2 {
@@ -802,6 +809,15 @@ func TestJSONQ_Only(t *testing.T) {
 	jq := New().FromString(jsonStr).
 		From("vendor.items")
 	expected := `[{"id":1,"price":1350},{"id":2,"price":1700},{"id":3,"price":1200},{"id":4,"price":850},{"id":5,"price":850},{"id":6,"price":950},{"id":null,"price":850}]`
+	out := jq.Only("id", "price")
+	assertJSON(t, out, expected)
+}
+
+func TestJSONQ_Only_Default(t *testing.T) {
+	jq := New().FromString(jsonStr).
+		From("vendor.items")
+	expected := `[{"id":1,"price":1350},{"id":2,"price":1700},{"id":3,"price":1200},{"id":4,"price":850},{"id":5,"price":850},{"id":6,"price":950},{"id":1000,"price":850}]`
+	jq.DefaultValues("id", 1000)
 	out := jq.Only("id", "price")
 	assertJSON(t, out, expected)
 }
