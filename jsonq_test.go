@@ -149,6 +149,31 @@ func TestJSONQ_FromString(t *testing.T) {
 	}
 }
 
+func TestJSONQ_FromByteArray(t *testing.T) {
+	testCases := []struct {
+		tag       string
+		input     []byte
+		errExpect bool
+	}{
+		{
+			tag:       "valid json",
+			input:     []byte(`{"name": "John Doe", "age": 30}`),
+			errExpect: false,
+		},
+		{
+			tag:       "invalid json should return error",
+			input:     []byte(`{"name": "John Doe", "age": 30, "only_key"}`),
+			errExpect: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		if err := New().FromByteArray(tc.input).Error(); err != nil && !tc.errExpect {
+			t.Errorf("failed %s", tc.tag)
+		}
+	}
+}
+
 func TestJSONQ_Reader(t *testing.T) {
 	testCases := []struct {
 		tag       string
