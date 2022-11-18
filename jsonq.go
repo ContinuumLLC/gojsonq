@@ -57,7 +57,7 @@ type JSONQ struct {
 
 // String satisfies stringer interface
 func (j *JSONQ) String() string {
-	return fmt.Sprintf("\nContent: %s\nQueries:%v\n", string(j.raw), j.queries)
+	return fmt.Sprintf("\nContent: %s\nQueries: %v\nAttributes: %v\nDefault Values: %v", string(j.raw), j.queries, j.attributes, j.defaultValues)
 }
 
 // decode decodes the raw message to Go data structure

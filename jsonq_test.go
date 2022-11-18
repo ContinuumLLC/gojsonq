@@ -20,7 +20,7 @@ func TestNew(t *testing.T) {
 
 func TestJSONQ_String(t *testing.T) {
 	jq := New()
-	expected := fmt.Sprintf("\nContent: %s\nQueries:%v\n", string(jq.raw), jq.queries)
+	expected := fmt.Sprintf("\nContent: %s\nQueries: %v\nAttributes: %v\nDefault Values: %v", string(jq.raw), jq.queries, jq.attributes, jq.defaultValues)
 	if out := jq.String(); out != expected {
 		t.Errorf("Expected: %v\n Got: %v", expected, out)
 	}
