@@ -11,11 +11,11 @@ import (
 // New returns a new instance of JSONQ
 func New(options ...OptionFunc) *JSONQ {
 	jq := &JSONQ{
-		queryMap:      defaultQueries(),
-		defaultValues: make(map[string]interface{}),
+		queryMap: defaultQueries(),
 		option: option{
 			decoder:   &DefaultDecoder{},
 			separator: defaultSeparator,
+			defaults:  make(map[string]interface{}),
 		},
 	}
 	for _, option := range options {
@@ -39,25 +39,24 @@ type query struct {
 
 // JSONQ describes a JSONQ type which contains all the state
 type JSONQ struct {
-	option           option                 // contains options for JSONQ
-	queryMap         map[string]QueryFunc   // contains query functions
-	node             string                 // contains node name
-	raw              json.RawMessage        // raw message from source (reader, string or file)
-	rootJSONContent  interface{}            // original decoded json data
-	jsonContent      interface{}            // copy of original decoded json data for further processing
-	defaultValues    map[string]interface{} // contains all the default values for the attributes
-	queryIndex       int                    // contains number of orWhere query call
-	queries          [][]query              // nested queries
-	attributes       []string               // select attributes that will be available in final resuls
-	offsetRecords    int                    // number of records that will be skipped in final result
-	limitRecords     int                    // number of records that will be available in final result
-	distinctProperty string                 // contain the distinct attribute name
-	errors           []error                // contains all the errors when processing
+	option           option               // contains options for JSONQ
+	queryMap         map[string]QueryFunc // contains query functions
+	node             string               // contains node name
+	raw              json.RawMessage      // raw message from source (reader, string or file)
+	rootJSONContent  interface{}          // original decoded json data
+	jsonContent      interface{}          // copy of original decoded json data for further processing
+	queryIndex       int                  // contains number of orWhere query call
+	queries          [][]query            // nested queries
+	attributes       []string             // select attributes that will be available in final results
+	offsetRecords    int                  // number of records that will be skipped in final result
+	limitRecords     int                  // number of records that will be available in final result
+	distinctProperty string               // contain the distinct attribute name
+	errors           []error              // contains all the errors when processing
 }
 
 // String satisfies stringer interface
 func (j *JSONQ) String() string {
-	return fmt.Sprintf("\nContent: %s\nQueries: %v\nAttributes: %v\nDefault Values: %v", string(j.raw), j.queries, j.attributes, j.defaultValues)
+	return fmt.Sprintf("\nContent: %s\nQueries: %v\nAttributes: %v", string(j.raw), j.queries, j.attributes)
 }
 
 // decode decodes the raw message to Go data structure
@@ -173,12 +172,6 @@ func (j *JSONQ) FromInterface(v interface{}) *JSONQ {
 // Select use for selection of the properties from query result
 func (j *JSONQ) Select(properties ...string) *JSONQ {
 	j.attributes = append(j.attributes, properties...)
-	return j
-}
-
-// DefaultValues use for supply of the default value for properties
-func (j *JSONQ) DefaultValues(property string, value interface{}) *JSONQ {
-	j.defaultValues[property] = value
 	return j
 }
 
@@ -512,7 +505,7 @@ func (j *JSONQ) only(properties ...string) interface{} {
 				node, alias := makeAlias(prop, j.option.separator)
 				rv, errV := getNestedValue(am, node, j.option.separator)
 				if rv == nil {
-					defaultValue, ok := j.defaultValues[node]
+					defaultValue, ok := j.option.defaults[node]
 					if !ok && errV != nil {
 						j.addError(errV)
 						continue

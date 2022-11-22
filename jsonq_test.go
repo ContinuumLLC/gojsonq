@@ -20,7 +20,7 @@ func TestNew(t *testing.T) {
 
 func TestJSONQ_String(t *testing.T) {
 	jq := New()
-	expected := fmt.Sprintf("\nContent: %s\nQueries: %v\nAttributes: %v\nDefault Values: %v", string(jq.raw), jq.queries, jq.attributes, jq.defaultValues)
+	expected := fmt.Sprintf("\nContent: %s\nQueries: %v\nAttributes: %v", string(jq.raw), jq.queries, jq.distinct().attributes)
 	if out := jq.String(); out != expected {
 		t.Errorf("Expected: %v\n Got: %v", expected, out)
 	}
@@ -258,13 +258,6 @@ func TestJSONQ_From_Set(t *testing.T) {
 	jq := New().From(node)
 	if jq.node != node {
 		t.Error("failed to set node name")
-	}
-}
-
-func TestJSONQ_DefaultValues(t *testing.T) {
-	jq := New().DefaultValues("id", "name")
-	if len(jq.defaultValues) != 1 {
-		t.Error("failed to set DefaultValues")
 	}
 }
 
@@ -814,10 +807,8 @@ func TestJSONQ_Only(t *testing.T) {
 }
 
 func TestJSONQ_Only_Default(t *testing.T) {
-	jq := New().FromString(jsonStr).
-		From("vendor.items")
+	jq := New(WithDefaults(map[string]interface{}{"id": 1000})).FromString(jsonStr).From("vendor.items")
 	expected := `[{"id":1,"price":1350},{"id":2,"price":1700},{"id":3,"price":1200},{"id":4,"price":850},{"id":5,"price":850},{"id":6,"price":950},{"id":1000,"price":850}]`
-	jq.DefaultValues("id", 1000)
 	out := jq.Only("id", "price")
 	assertJSON(t, out, expected)
 }

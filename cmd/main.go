@@ -25,12 +25,11 @@ func main() {
 }
 
 func query(content []byte, selection string) (string, error) {
-	jq := gojsonq.New().FromByteArray(content)
-
+	jq := gojsonq.New(gojsonq.WithDefaults(map[string]interface{}{"test": "test"})).FromByteArray(content)
 	jq.Where("Action", "=", "eventLog1")
 	jq.OrWhere("AgentID", "=", "9ffc24a3-ec95-49d5-8e4e-5ac6a6a9762c")
 	jq.Select(strings.Split(selection, ",")...)
-	jq.DefaultValues("test", "test")
+
 	var b bytes.Buffer
 	jq.Writer(&b)
 
