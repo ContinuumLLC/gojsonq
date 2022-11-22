@@ -69,7 +69,8 @@ func TestWithDefaults(t *testing.T) {
 	}{
 		{name: "Nil defaults", wantError: true, defaults: nil},
 		{name: "Empty defaults", wantError: false, defaults: map[string]interface{}{}},
-		{name: "with defaults", wantError: false, defaults: map[string]interface{}{"1": 1}},
+		{name: "with defaults value", wantError: false, defaults: map[string]interface{}{"1": 1}},
+		{name: "with defaults array", wantError: false, defaults: map[string]interface{}{"1": []int{1, 2, 3}}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
