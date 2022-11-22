@@ -11,7 +11,7 @@ import (
 // Available named error values
 var (
 	ErrUnsupportedType = fmt.Errorf("gojsonq: Unsupported Type")
-	ErrNoRecordFound   = fmt.Errorf("gojsonq: No Record Found!!")
+	ErrNoRecordFound   = fmt.Errorf("gojsonq: No Record Found")
 )
 
 // New returns a new instance of JSONQ
