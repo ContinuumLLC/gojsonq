@@ -371,8 +371,6 @@ func (j *JSONQ) processQuery() *JSONQ {
 		j.jsonContent = j.findInArray(v)
 	case map[string]interface{}:
 		j.jsonContent = j.findInMap(v)
-	default:
-		j.addError(ErrUnsupportedType)
 	}
 	return j
 }

@@ -612,6 +612,26 @@ func TestJSONQ_WhereStrictContains_expecting_empty_result(t *testing.T) {
 	assertJSON(t, out, expected, "WhereContains expecting empty result")
 }
 
+func TestJSONQ_WhereMap_expecting_result(t *testing.T) {
+	jq := New().FromString(`{"name":"computers","description":"List of computer products","vendor":{"name":"Star Trek","email":"info@example.com","website":"www.example.com","items":{"id":1,"name":"MacBook Pro 13 inch retina","price":1350}}}`).
+		From("vendor.items").
+		WhereStrictContains("name", "retina")
+	expected := `{"id":1,"name":"MacBook Pro 13 inch retina","price":1350}`
+	out := jq.Get()
+	assertJSON(t, out, expected, "WhereContains expecting result")
+}
+
+func TestJSONQ_WhereMap_expecting_empty_result(t *testing.T) {
+	jq := New().FromString(`{"name":"computers","description":"List of computer products","vendor":{"name":"Star Trek","email":"info@example.com","website":"www.example.com","items":{"id":1,"name":"MacBook Pro 13 inch retina","price":1350}}}`).
+		From("vendor.items").
+		WhereStrictContains("name", "RetinA")
+	out := jq.Get()
+	if out != nil {
+		t.Errorf("WhereContains expecting empty result")
+
+	}
+}
+
 func TestJSONQ_GroupBy(t *testing.T) {
 	jq := New().FromString(jsonStr).
 		From("vendor.items").
@@ -802,6 +822,14 @@ func TestJSONQ_Only(t *testing.T) {
 	jq := New().FromString(jsonStr).
 		From("vendor.items")
 	expected := `[{"id":1,"price":1350},{"id":2,"price":1700},{"id":3,"price":1200},{"id":4,"price":850},{"id":5,"price":850},{"id":6,"price":950},{"id":null,"price":850}]`
+	out := jq.Only("id", "price")
+	assertJSON(t, out, expected)
+}
+
+func TestJSONQ_OnlyMap(t *testing.T) {
+	jq := New().FromString(`{"name":"computers","description":"List of computer products","vendor":{"name":"Star Trek","email":"info@example.com","website":"www.example.com","items":{"id":1,"name":"MacBook Pro 13 inch retina","price":1350}}}`).
+		From("vendor.items")
+	expected := `{"id":1,"price":1350}`
 	out := jq.Only("id", "price")
 	assertJSON(t, out, expected)
 }
