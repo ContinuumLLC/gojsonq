@@ -11,8 +11,8 @@ import (
 )
 
 func main() {
-	content, err := ioutil.ReadFile("/home/fusion/workspace/src/github.com/lkumarjain/playground/event_log_array.json")
-	//content, err := ioutil.ReadFile("/home/fusion/workspace/src/github.com/lkumarjain/playground/event_log_object.json")
+	//content, err := ioutil.ReadFile("/home/fusion/workspace/src/github.com/lkumarjain/playground/event_log_array.json")
+	content, err := ioutil.ReadFile("/home/fusion/workspace/src/github.com/lkumarjain/playground/event_log_object.json")
 	if err != nil {
 		log.Fatal("Error when opening file: ", err)
 	}

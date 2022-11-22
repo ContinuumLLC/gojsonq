@@ -8,6 +8,12 @@ import (
 	"io/ioutil"
 )
 
+// Available named error values
+var (
+	ErrUnsupportedType = fmt.Errorf("gojsonq: Unsupported Type")
+	ErrNoRecordFound   = fmt.Errorf("gojsonq: No Record Found!!")
+)
+
 // New returns a new instance of JSONQ
 func New(options ...OptionFunc) *JSONQ {
 	jq := &JSONQ{
@@ -317,7 +323,10 @@ func (j *JSONQ) findInArray(aa []interface{}) []interface{} {
 	result := make([]interface{}, 0)
 	for _, a := range aa {
 		if m, ok := a.(map[string]interface{}); ok {
-			result = append(result, j.findInMap(m)...)
+			r := j.findInMap(m)
+			if r != empty {
+				result = append(result, r)
+			}
 		}
 	}
 	return result
@@ -325,8 +334,7 @@ func (j *JSONQ) findInArray(aa []interface{}) []interface{} {
 
 // findInMap traverses through a map and returns the matched value list.
 // This helps to process Where/OrWhere queries
-func (j *JSONQ) findInMap(vm map[string]interface{}) []interface{} {
-	result := make([]interface{}, 0)
+func (j *JSONQ) findInMap(vm map[string]interface{}) interface{} {
 	orPassed := false
 	for _, qList := range j.queries {
 		andPassed := true
@@ -334,7 +342,7 @@ func (j *JSONQ) findInMap(vm map[string]interface{}) []interface{} {
 			cf, ok := j.queryMap[q.operator]
 			if !ok {
 				j.addError(fmt.Errorf("invalid operator %s", q.operator))
-				return result
+				return empty
 			}
 			nv, errnv := getNestedValue(vm, q.key, j.option.separator)
 			if errnv != nil {
@@ -351,15 +359,20 @@ func (j *JSONQ) findInMap(vm map[string]interface{}) []interface{} {
 		orPassed = orPassed || andPassed
 	}
 	if orPassed {
-		result = append(result, vm)
+		return vm
 	}
-	return result
+	return empty
 }
 
 // processQuery makes the result
 func (j *JSONQ) processQuery() *JSONQ {
-	if aa, ok := j.jsonContent.([]interface{}); ok {
-		j.jsonContent = j.findInArray(aa)
+	switch v := j.jsonContent.(type) {
+	case []interface{}:
+		j.jsonContent = j.findInArray(v)
+	case map[string]interface{}:
+		j.jsonContent = j.findInMap(v)
+	default:
+		j.addError(ErrUnsupportedType)
 	}
 	return j
 }
@@ -449,9 +462,9 @@ func (j *JSONQ) Distinct(property string) *JSONQ {
 
 // distinct builds distinct value using provided attribute/column/property
 func (j *JSONQ) distinct() *JSONQ {
-	m := map[string]bool{}
-	var dt = make([]interface{}, 0)
 	if aa, ok := j.jsonContent.([]interface{}); ok {
+		m := map[string]bool{}
+		var dt = make([]interface{}, 0)
 		for _, a := range aa {
 			if vm, ok := a.(map[string]interface{}); ok {
 				v, err := getNestedValue(vm, j.distinctProperty, j.option.separator)
@@ -465,9 +478,9 @@ func (j *JSONQ) distinct() *JSONQ {
 				}
 			}
 		}
+		// replace the new result with the previous result
+		j.jsonContent = dt
 	}
-	// replace the new result with the previous result
-	j.jsonContent = dt
 	return j
 }
 
@@ -498,31 +511,51 @@ func (j *JSONQ) sortBy(property string, asc bool) *JSONQ {
 	return j
 }
 
-// only return selected properties in result
-func (j *JSONQ) only(properties ...string) interface{} {
+// only return selected properties in result from array
+func (j *JSONQ) onlyFromArray(input []interface{}, properties ...string) interface{} {
 	var result = make([]interface{}, 0)
-	if aa, ok := j.jsonContent.([]interface{}); ok {
-		for _, am := range aa {
-			tmap := map[string]interface{}{}
-			for _, prop := range properties {
-				node, alias := makeAlias(prop, j.option.separator)
-				rv, errV := getNestedValue(am, node, j.option.separator)
-				if rv == nil {
-					defaultValue, ok := j.option.defaults[node]
-					if !ok && errV != nil {
-						j.addError(errV)
-						continue
-					}
-					rv = defaultValue
-				}
-				tmap[alias] = rv
-			}
-			if len(tmap) > 0 {
-				result = append(result, tmap)
-			}
+	for _, am := range input {
+		tmap := j.onlyFromMap(am, properties...)
+		if len(tmap) > 0 {
+			result = append(result, tmap)
 		}
 	}
+
 	return result
+}
+
+// only return selected properties in result from interface
+func (j *JSONQ) onlyFromMap(input interface{}, properties ...string) map[string]interface{} {
+	result := map[string]interface{}{}
+	for _, prop := range properties {
+		node, alias := makeAlias(prop, j.option.separator)
+		rv, errV := getNestedValue(input, node, j.option.separator)
+		if rv == nil {
+			defaultValue, ok := j.option.defaults[node]
+			if !ok && errV != nil {
+				j.addError(errV)
+				continue
+			}
+			rv = defaultValue
+		}
+		result[alias] = rv
+	}
+
+	return result
+}
+
+// only return selected properties in result
+func (j *JSONQ) only(properties ...string) interface{} {
+	if j.jsonContent == empty {
+		j.errors = append(j.errors, ErrNoRecordFound)
+		return j
+	}
+
+	if aa, ok := j.jsonContent.([]interface{}); ok {
+		return j.onlyFromArray(aa, properties...)
+	}
+
+	return j.onlyFromMap(j.jsonContent, properties...)
 }
 
 // Only collects the properties from a list of object
