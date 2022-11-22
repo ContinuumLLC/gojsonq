@@ -383,8 +383,9 @@ func (j *JSONQ) prepare() *JSONQ {
 func (j *JSONQ) GroupBy(property string) *JSONQ {
 	j.prepare()
 
-	dt := map[string][]interface{}{}
 	if aa, ok := j.jsonContent.([]interface{}); ok {
+		dt := map[string][]interface{}{}
+
 		for _, a := range aa {
 			if vm, ok := a.(map[string]interface{}); ok {
 				v, err := getNestedValue(vm, property, j.option.separator)
@@ -395,9 +396,11 @@ func (j *JSONQ) GroupBy(property string) *JSONQ {
 				}
 			}
 		}
+
+		// replace the new result with the previous result
+		j.jsonContent = dt
 	}
-	// replace the new result with the previous result
-	j.jsonContent = dt
+
 	return j
 }
 
