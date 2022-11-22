@@ -827,10 +827,9 @@ func TestJSONQ_Only(t *testing.T) {
 }
 
 func TestJSONQ_OnlyMap(t *testing.T) {
-	jq := New().FromString(`{"name":"computers","description":"List of computer products","vendor":{"name":"Star Trek","email":"info@example.com","website":"www.example.com","items":{"id":1,"name":"MacBook Pro 13 inch retina","price":1350}}}`).
-		From("vendor.items")
-	expected := `{"id":1,"price":1350}`
-	out := jq.Only("id", "price")
+	jq := New().FromString(jsonStr)
+	expected := `{"name":"computers","vendor":"Star Trek"}`
+	out := jq.Only("name", "vendor.name as vendor")
 	assertJSON(t, out, expected)
 }
 
@@ -1090,6 +1089,22 @@ func TestJSONQ_Pluck_expecting_empty_list_of_float64(t *testing.T) {
 	out := jq.Pluck("invalid_prop")
 	expected := `[]`
 	assertJSON(t, out, expected, "Pluck expecting empty list from list of objects, because of invalid property name")
+}
+
+func TestJSONQ_Pluck_Map_expecting_float64(t *testing.T) {
+	jq := New().FromString(jsonStr)
+	out := jq.Pluck("name")
+	expected := `"computers"`
+	assertJSON(t, out, expected, "Pluck expecting prices from list of objects")
+}
+
+func TestJSONQ_Pluck_Map_expecting_empty_float64(t *testing.T) {
+	jq := New().FromString(jsonStr)
+	out := jq.Pluck("invalid_prop")
+
+	if out != nil {
+		t.Errorf("Pluck expecting empty nil, because of invalid property name")
+	}
 }
 
 func TestJSONQ_Pluck_expecting_with_distinct(t *testing.T) {

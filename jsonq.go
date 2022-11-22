@@ -571,6 +571,19 @@ func (j *JSONQ) OnlyR(properties ...string) (*Result, error) {
 }
 
 // Pluck build an array of values form a property of a list of objects
+func (j *JSONQ) pluckFromArray(input []interface{}, property string) interface{} {
+	var result = make([]interface{}, 0)
+	for _, am := range input {
+		if mv, ok := am.(map[string]interface{}); ok {
+			if v, ok := mv[property]; ok {
+				result = append(result, v)
+			}
+		}
+	}
+	return result
+}
+
+// Pluck build an array of values form a property of a list of objects
 func (j *JSONQ) Pluck(property string) interface{} {
 	j.prepare()
 	if j.distinctProperty != "" {
@@ -579,17 +592,14 @@ func (j *JSONQ) Pluck(property string) interface{} {
 	if j.limitRecords != 0 {
 		j.limit()
 	}
-	var result = make([]interface{}, 0)
-	if aa, ok := j.jsonContent.([]interface{}); ok {
-		for _, am := range aa {
-			if mv, ok := am.(map[string]interface{}); ok {
-				if v, ok := mv[property]; ok {
-					result = append(result, v)
-				}
-			}
-		}
+
+	switch v := j.jsonContent.(type) {
+	case []interface{}:
+		return j.pluckFromArray(v, property)
+	case map[string]interface{}:
+		return v[property]
 	}
-	return result
+	return empty
 }
 
 // PluckR build an array of values form a property of a list of objects and return as Result instance
